@@ -62,6 +62,8 @@ unhandled({
 
 // Prevent window being garbage collected
 let mainWindow: Electron.BrowserWindow | null;
+let splashWindow: Electron.BrowserWindow | null;
+let aboutWindow: Electron.BrowserWindow | null;
 electronUpdater.autoUpdater.autoDownload = false;
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -174,12 +176,7 @@ electronDebug({
   showDevTools: false, // Disable automatic devTools on new window
 });
 
-let icon = 'assets/icon.png';
-if (process.platform === 'win32') {
-  icon = 'assets/generated/icons/win/icon.ico';
-} else if (process.platform === 'darwin') {
-  icon = 'assets/generated/icons/mac/icon.icns';
-}
+let icon = 'assets/icon.ico';
 
 function onClosed() {
   // Dereference the window
@@ -302,6 +299,10 @@ const showNeedToRestartDialog = async (id: string) => {
 
 function initTheme(win: BrowserWindow) {
   injectCSS(win.webContents, musicPlayerCss);
+  injectUserThemes(win);
+}
+
+function injectUserThemes(win: BrowserWindow) {
   // Load user CSS
   const themes: string[] = config.get('options.themes');
   if (Array.isArray(themes)) {
@@ -329,7 +330,73 @@ function initTheme(win: BrowserWindow) {
   });
 }
 
-async function createMainWindow() {
+function createSplashWindow() {
+  const win = new BrowserWindow({
+    width: 700,
+    height: 420,
+    frame: false,
+    backgroundColor: '#050505',
+    roundedCorners: true,
+    alwaysOnTop: true,
+    resizable: false,
+    movable: false,
+    center: true,
+    skipTaskbar: true,
+    webPreferences: {
+      contextIsolation: true,
+      preload: path.join(__dirname, '..', 'preload', 'splash-preload.cjs'),
+    },
+  });
+
+  win.loadFile(path.join(app.getAppPath(), 'assets', 'splash.html'));
+  win.on('closed', () => {
+    splashWindow = null;
+  });
+
+  return win;
+}
+
+function createAboutWindow() {
+  if (aboutWindow && !aboutWindow.isDestroyed()) {
+    aboutWindow.focus();
+    return;
+  }
+
+  aboutWindow = new BrowserWindow({
+    width: 860,
+    height: 720,
+    minWidth: 680,
+    minHeight: 560,
+    title: `${APPLICATION_NAME} - ${t('main.menu.about')}`,
+    backgroundColor: '#101112',
+    show: false,
+    parent: mainWindow ?? undefined,
+    modal: false,
+    webPreferences: {
+      contextIsolation: true,
+    },
+  });
+
+  aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
+    void shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  aboutWindow.loadFile(path.join(app.getAppPath(), 'assets', 'about.html'), {
+    query: {
+      version: app.getVersion(),
+      language: config.get('options.language') ?? app.getLocale(),
+    },
+  });
+  injectUserThemes(aboutWindow);
+  aboutWindow.once('ready-to-show', () => aboutWindow?.show());
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+  });
+}
+
+ipcMain.on('peard:show-about', () => createAboutWindow());
+
+async function createMainWindow(deferShow = false) {
   const windowSize = config.get('window-size');
   const windowMaximized = config.get('window-maximized');
   const windowPosition: Electron.Point = config.get('window-position');
@@ -490,7 +557,7 @@ async function createMainWindow() {
   });
 
   win.once('ready-to-show', () => {
-    if (config.get('options.appVisible')) {
+    if (!deferShow && config.get('options.appVisible')) {
       win.show();
     }
   });
@@ -765,7 +832,25 @@ app.whenReady().then(async () => {
     }
   });
 
-  mainWindow = await createMainWindow();
+  const splashStartedAt = Date.now();
+  splashWindow = createSplashWindow();
+  mainWindow = await createMainWindow(true);
+  mainWindow.once('ready-to-show', () => {
+    const remainingTime = Math.max(0, 3000 - (Date.now() - splashStartedAt));
+
+    setTimeout(() => {
+      if (!splashWindow || splashWindow.isDestroyed()) {
+        if (config.get('options.appVisible')) mainWindow?.show();
+        return;
+      }
+
+      splashWindow.webContents.send('splash:close');
+      setTimeout(() => {
+        if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
+        if (config.get('options.appVisible')) mainWindow?.show();
+      }, 300);
+    }, remainingTime);
+  });
   await setApplicationMenu(mainWindow);
   await refreshMenu(mainWindow);
   setUpTray(app, mainWindow);

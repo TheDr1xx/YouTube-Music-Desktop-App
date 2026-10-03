@@ -20,26 +20,22 @@ mac:
       arch:
         - x64
         - arm64
-  icon: assets/generated/icons/mac/icon.icon
+  icon: assets/icon.ico
   compression: maximum
 win:
-  icon: assets/generated/icons/win/icon.ico
+  icon: assets/icon.ico
   target:
     - target: nsis-web
       arch:
         - x64
-        - ia32
-        - arm64
     - target: portable
       arch:
         - x64
-        - ia32
-        - arm64
   compression: maximum
 nsisWeb:
   runAfterFinish: false
 linux:
-  icon: assets/generated/icons/png
+  icon: assets/icon.ico
   category: AudioVideo
   syncDesktopName: true
   desktop:

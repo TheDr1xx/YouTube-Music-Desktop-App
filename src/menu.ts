@@ -4,6 +4,7 @@ import {
   type BrowserWindow,
   clipboard,
   dialog,
+  ipcMain,
   Menu,
   type MenuItem,
   shell,
@@ -691,7 +692,12 @@ export const mainMenuTemplate = async (
     },
     {
       label: t('main.menu.about'),
-      submenu: [{ role: 'about' }],
+      submenu: [
+        {
+          label: t('main.menu.about'),
+          click: () => ipcMain.emit('peard:show-about'),
+        },
+      ],
     },
   ];
 };
@@ -702,7 +708,10 @@ export const setApplicationMenu = async (win: Electron.BrowserWindow) => {
     menuTemplate.unshift({
       label: name,
       submenu: [
-        { role: 'about' },
+        {
+          label: t('main.menu.about'),
+          click: () => ipcMain.emit('peard:show-about'),
+        },
         { type: 'separator' },
         { role: 'hide' },
         { role: 'hideOthers' },

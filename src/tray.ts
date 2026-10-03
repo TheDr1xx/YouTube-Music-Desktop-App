@@ -54,17 +54,12 @@ export const setUpTray = (app: Electron.App, win: Electron.BrowserWindow) => {
     : 1;
 
   const defaultTrayIcon = nativeImage
-    .createFromPath(is.macOS() ? TrayIconWhite : TrayIcon)
+    .createFromPath('assets/icon.ico')
     .resize({
       width: 16 * pixelRatio,
       height: 16 * pixelRatio,
     });
-  const pausedTrayIcon = nativeImage
-    .createFromPath(is.macOS() ? PausedTrayIconWhite : PausedTrayIcon)
-    .resize({
-      width: 16 * pixelRatio,
-      height: 16 * pixelRatio,
-    });
+  const pausedTrayIcon = defaultTrayIcon;
 
   tray = new Tray(defaultTrayIcon);
 

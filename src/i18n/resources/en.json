@@ -498,11 +498,15 @@
       }
     },
     "do-not-track": {
-      "description": "Block all tracking out of the box",
+      "ad-blocker": {
+        "description": "Integrated ad and tracker blocker, enabled by default",
+        "name": "Ad blocker"
+      },
+      "description": "Integrated ad and tracker blocker, enabled by default",
       "menu": {
         "blocker": "Blocker"
       },
-      "name": "Do Not Track"
+      "name": "Ad blocker"
     },
     "downloader": {
       "backend": {

@@ -61,8 +61,19 @@ ytmusic-app-layout > [slot='player-page'] {
 }
 
 ytmusic-guide-renderer {
+  top: calc(
+    var(--menu-bar-height) + var(--ytmusic-nav-bar-height)
+  ) !important;
   height: calc(
     100vh - var(--menu-bar-height) - var(--ytmusic-nav-bar-height)
+  ) !important;
+}
+
+/* Keep the first navigation item below the app header in both legacy and bauhaus layouts. */
+ytmusic-guide-renderer,
+ytmusic-guide-renderer #guide-content {
+  top: calc(
+    var(--menu-bar-height) + var(--ytmusic-nav-bar-height)
   ) !important;
 }
 

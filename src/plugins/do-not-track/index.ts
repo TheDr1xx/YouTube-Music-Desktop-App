@@ -42,11 +42,11 @@ export interface TrackerBlockerConfig {
 }
 
 export default createPlugin({
-  name: () => t('plugins.do-not-track.name'),
-  description: () => t('plugins.do-not-track.description'),
+  name: () => t('plugins.do-not-track.ad-blocker.name'),
+  description: () => t('plugins.do-not-track.ad-blocker.description'),
   restartNeeded: false,
   config: {
-    enabled: false,
+    enabled: true,
     cache: true,
     blocker: blockers.InPlayer,
     additionalBlockLists: [],
@@ -75,14 +75,13 @@ export default createPlugin({
       const config = await getConfig();
       this.mainWindow = window;
 
-      if (config.blocker === blockers.WithBlocklists) {
-        await loadTrackerBlockerEngine(
-          window.webContents.session,
-          config.cache,
-          config.additionalBlockLists,
-          config.disableDefaultLists,
-        );
-      }
+      // Always load the blocklist engine to eliminate 100%
+      await loadTrackerBlockerEngine(
+        window.webContents.session,
+        config.cache,
+        config.additionalBlockLists,
+        config.disableDefaultLists,
+      );
     },
     stop({ window }) {
       if (isBlockerEnabled(window.webContents.session)) {
@@ -91,17 +90,15 @@ export default createPlugin({
     },
     async onConfigChange(newConfig) {
       if (this.mainWindow) {
-        if (
-          newConfig.blocker === blockers.WithBlocklists &&
-          !isBlockerEnabled(this.mainWindow.webContents.session)
-        ) {
-          await loadTrackerBlockerEngine(
-            this.mainWindow.webContents.session,
-            newConfig.cache,
-            newConfig.additionalBlockLists,
-            newConfig.disableDefaultLists,
-          );
+        if (isBlockerEnabled(this.mainWindow.webContents.session)) {
+          unloadTrackerBlockerEngine(this.mainWindow.webContents.session);
         }
+        await loadTrackerBlockerEngine(
+          this.mainWindow.webContents.session,
+          newConfig.cache,
+          newConfig.additionalBlockLists,
+          newConfig.disableDefaultLists,
+        );
       }
     },
   },
@@ -119,18 +116,17 @@ export default createPlugin({
         return Reflect.apply(...arguments).then((o) => _prunerFn(o));
       },
     }); 0`,
-    async start({ getConfig }) {
-      const config = await getConfig();
-
-      if (config.blocker === blockers.InPlayer && !isInjected()) {
+    async start() {
+      // Always run both the network pruner and the cliqz preload for maximum ad blocking
+      if (!isInjected()) {
         inject(contextBridge);
         await webFrame.executeJavaScript(this.script);
-      } else if (config.blocker === blockers.WithBlocklists) {
-        await injectCliqzPreload();
       }
+      
+      await injectCliqzPreload();
     },
-    async onConfigChange(newConfig) {
-      if (newConfig.blocker === blockers.InPlayer && !isInjected()) {
+    async onConfigChange() {
+      if (!isInjected()) {
         inject(contextBridge);
         await webFrame.executeJavaScript(this.script);
       }

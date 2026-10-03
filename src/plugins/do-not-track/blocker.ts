@@ -22,28 +22,30 @@ export const loadTrackerBlockerEngine = async (
   if (!fs.existsSync(cacheDirectory)) {
     fs.mkdirSync(cacheDirectory);
   }
+  
+  const binPath = path.join(cacheDirectory, 'tb-engine.bin');
+  if (fs.existsSync(binPath)) {
+    const stats = fs.statSync(binPath);
+    const now = new Date().getTime();
+    if (now - stats.mtime.getTime() >= 24 * 60 * 60 * 1000) {
+      fs.unlinkSync(binPath); // Force update every 24h
+    }
+  }
+
   const cachingOptions =
     cache && additionalBlockLists.length === 0
       ? {
-          path: path.join(cacheDirectory, 'tb-engine.bin'),
+          path: binPath,
           read: promises.readFile,
           write: promises.writeFile,
         }
       : undefined;
-  const tbSources = TbSourcesSchema.safeParse(
-    await (
-      await net.fetch(
-        'https://raw.githubusercontent.com/organization/tb-list/refs/heads/main/tb.json',
-      )
-    ).json(),
-  );
+
   const lists = [
     ...((disableDefaultLists && !Array.isArray(disableDefaultLists)) ||
     (Array.isArray(disableDefaultLists) && disableDefaultLists.length > 0)
       ? []
-      : tbSources.success
-        ? tbSources.data.tb
-        : []),
+      : ['https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt']),
     ...additionalBlockLists,
   ];
 

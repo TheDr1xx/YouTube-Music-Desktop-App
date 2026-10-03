@@ -12,6 +12,7 @@ interface PrunableResponse {
   playerAds?: unknown;
   adPlacements?: unknown;
   adSlots?: unknown;
+  adBreakHeartbeatParams?: unknown;
   playerResponse?: PrunableResponse;
   ytInitialPlayerResponse?: PrunableResponse;
   [key: string]: unknown;
@@ -37,15 +38,18 @@ export const inject = (contextBridge: ContextBridge): void => {
       delete o.playerAds;
       delete o.adPlacements;
       delete o.adSlots;
+      delete o.adBreakHeartbeatParams;
       if (o.playerResponse) {
         delete o.playerResponse.playerAds;
         delete o.playerResponse.adPlacements;
         delete o.playerResponse.adSlots;
+        delete o.playerResponse.adBreakHeartbeatParams;
       }
       if (o.ytInitialPlayerResponse) {
         delete o.ytInitialPlayerResponse.playerAds;
         delete o.ytInitialPlayerResponse.adPlacements;
         delete o.ytInitialPlayerResponse.adSlots;
+        delete o.ytInitialPlayerResponse.adBreakHeartbeatParams;
       }
 
       return o;
@@ -69,6 +73,14 @@ export const inject = (contextBridge: ContextBridge): void => {
     },
     {
       chain: 'ytInitialPlayerResponse.adSlots',
+      cValue: 'undefined',
+    },
+    {
+      chain: 'ytInitialPlayerResponse.adBreakHeartbeatParams',
+      cValue: 'undefined',
+    },
+    {
+      chain: 'playerResponse.adBreakHeartbeatParams',
       cValue: 'undefined',
     },
   ];
