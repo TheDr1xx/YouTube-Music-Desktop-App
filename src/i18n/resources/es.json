@@ -839,6 +839,38 @@
       "description": "Salta automáticamente las partes no musicales como la introducción/final o secciones de videos musicales donde la canción no está sonando",
       "name": "SponsorBlock"
     },
+    "stream-song-request": {
+      "description": "Permite que los espectadores busquen música y añadan canciones a la cola mediante un enlace público temporal",
+      "dialog": {
+        "tunnel-unavailable": "El enlace público todavía no está listo. Comprueba tu conexión a Internet e inténtalo de nuevo.",
+        "url-copied": "Enlace público para pedir canciones copiado."
+      },
+      "menu": {
+        "block-explicit": "Bloquear canciones explícitas",
+        "cooldown": "Espera entre solicitudes (segundos)",
+        "copy-public-url": "Copiar enlace público de solicitudes",
+        "max-per-viewer": "Máximo de solicitudes por espectador y sesión (0 = ilimitado)",
+        "open-url": "Abrir página local de solicitudes",
+        "port": "Puerto del servidor local",
+        "require-nickname": "Exigir un nombre",
+        "reset-defaults": "Restablecer ajustes"
+      },
+      "name": "Solicitudes de canciones para stream",
+      "prompt": {
+        "cooldown": {
+          "label": "Segundos entre solicitudes del mismo espectador:",
+          "title": "Espera entre solicitudes"
+        },
+        "max-per-viewer": {
+          "label": "Máximo de solicitudes por espectador hasta cerrar la app (0 = ilimitado):",
+          "title": "Límite de solicitudes por espectador"
+        },
+        "port": {
+          "label": "Puerto del servidor local:",
+          "title": "Puerto de la página de solicitudes"
+        }
+      }
+    },
     "synced-lyrics": {
       "description": "Proporciona letras de canciones sincronizadas, utilizando proveedores como LRClib.",
       "errors": {
@@ -1001,6 +1033,18 @@
         "visualizer-type": "Tipo de visualizador"
       },
       "name": "Visualizador"
+    },
+    "volume-booster": {
+      "description": "Amplifica el volumen hasta un 500% (5x) mediante Web Audio API GainNode",
+      "menu": {
+        "custom-multiplier": "Multiplicador personalizado...",
+        "multiplier": "{{multiplier}}x ({{percent}}%)"
+      },
+      "name": "Amplificador de volumen (Volume Booster)",
+      "prompt": {
+        "label": "Introduce el multiplicador (1.0 a 10.0):",
+        "title": "Multiplicador del amplificador de volumen"
+      }
     }
   }
 }

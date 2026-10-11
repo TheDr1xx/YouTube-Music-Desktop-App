@@ -1,4 +1,6 @@
 // This is used for to control the songs
+import { randomUUID } from 'node:crypto';
+
 import { type BrowserWindow, ipcMain } from 'electron';
 
 import { LikeType } from '@/types/datahost-get-state';
@@ -114,6 +116,42 @@ export const getSongControls = (win: BrowserWindow) => {
         videoIdValue,
         queueInsertPosition,
       );
+    },
+    addSongToQueueAndWait: (videoId: string, queueInsertPosition: string) => {
+      const videoIdValue = parseStringFromArgsType(videoId);
+      if (videoIdValue === null) return Promise.resolve(false);
+
+      const requestId = randomUUID();
+      return new Promise<boolean>((resolve) => {
+        const timeout = setTimeout(() => {
+          ipcMain.removeListener('peard:add-to-queue-result', onResult);
+          resolve(false);
+        }, 15000);
+        const onResult = (
+          _event: Electron.IpcMainEvent,
+          id: string,
+          ok: boolean,
+        ) => {
+          if (id !== requestId) return;
+          clearTimeout(timeout);
+          ipcMain.removeListener('peard:add-to-queue-result', onResult);
+          resolve(ok);
+        };
+
+        ipcMain.on('peard:add-to-queue-result', onResult);
+        try {
+          win.webContents.send(
+            'peard:add-to-queue',
+            videoIdValue,
+            queueInsertPosition,
+            requestId,
+          );
+        } catch {
+          clearTimeout(timeout);
+          ipcMain.removeListener('peard:add-to-queue-result', onResult);
+          resolve(false);
+        }
+      });
     },
     moveSongInQueue: (
       fromIndex: ArgsType<number>,

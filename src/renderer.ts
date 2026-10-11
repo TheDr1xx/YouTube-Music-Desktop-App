@@ -190,57 +190,93 @@ async function onApiLoaded() {
 
   window.ipcRenderer.on(
     'peard:add-to-queue',
-    (_, videoId: string, queueInsertPosition: string) => {
+    async (
+      _,
+      videoId: string,
+      queueInsertPosition: string,
+      requestId?: string,
+    ) => {
+      const respond = (success: boolean) => {
+        if (requestId) {
+          window.ipcRenderer.send(
+            'peard:add-to-queue-result',
+            requestId,
+            success,
+          );
+        }
+      };
       const queue = document.querySelector<QueueElement>('#queue');
       const app = document.querySelector<MusicPlayerAppElement>('ytmusic-app');
-      if (!app) return;
-
       const store = queue?.queue.store.store;
-      if (!store) return;
+      if (!app || !queue || !store) {
+        respond(false);
+        return;
+      }
 
-      app.networkManager
-        .fetch('/music/get_queue', {
+      try {
+        const result = await app.networkManager.fetch('/music/get_queue', {
           queueContextParams: store.getState().queue.queueContextParams,
           queueInsertPosition,
           videoIds: [videoId],
-        })
-        .then((result) => {
-          if (
-            result &&
-            typeof result === 'object' &&
-            'queueDatas' in result &&
-            Array.isArray(result.queueDatas)
-          ) {
-            const queueItems = store.getState().queue.items;
-            const queueItemsLength = queueItems.length ?? 0;
-            queue?.dispatch({
-              type: 'ADD_ITEMS',
-              payload: {
-                nextQueueItemId: store.getState().queue.nextQueueItemId,
-                index:
-                  queueInsertPosition === 'INSERT_AFTER_CURRENT_VIDEO'
-                    ? queueItems.findIndex(
-                        (it) =>
-                          (
-                            it.playlistPanelVideoRenderer ||
-                            it.playlistPanelVideoWrapperRenderer
-                              ?.primaryRenderer.playlistPanelVideoRenderer
-                          )?.selected,
-                      ) + 1 || queueItemsLength
-                    : queueItemsLength,
-                items: result.queueDatas
-                  .map((it) =>
-                    typeof it === 'object' && it && 'content' in it
-                      ? it.content
-                      : null,
-                  )
-                  .filter(Boolean),
-                shuffleEnabled: false,
-                shouldAssignIds: true,
-              },
-            });
-          }
         });
+
+        if (
+          !result ||
+          typeof result !== 'object' ||
+          !('queueDatas' in result) ||
+          !Array.isArray(result.queueDatas)
+        ) {
+          respond(false);
+          return;
+        }
+
+        const items = result.queueDatas
+          .map((item) =>
+            typeof item === 'object' && item && 'content' in item
+              ? item.content
+              : null,
+          )
+          .filter(Boolean);
+        if (items.length === 0) {
+          respond(false);
+          return;
+        }
+
+        const queueItems = store.getState().queue.items;
+        const queueItemsLength = queueItems.length ?? 0;
+        const addedIndex =
+          queueInsertPosition === 'INSERT_AFTER_CURRENT_VIDEO'
+            ? queueItems.findIndex(
+                (item) =>
+                  (
+                    item.playlistPanelVideoRenderer ||
+                    item.playlistPanelVideoWrapperRenderer?.primaryRenderer
+                      .playlistPanelVideoRenderer
+                  )?.selected,
+              ) + 1 || queueItemsLength
+            : queueItemsLength;
+
+        queue.dispatch({
+          type: 'ADD_ITEMS',
+          payload: {
+            nextQueueItemId: store.getState().queue.nextQueueItemId,
+            index: addedIndex,
+            items,
+            shuffleEnabled: false,
+            shouldAssignIds: true,
+          },
+        });
+
+        if (api?.getPlayerState() === -1 || api?.getPlayerState() === 0) {
+          queue.dispatch({ type: 'SET_INDEX', payload: addedIndex });
+          api?.playVideo();
+        }
+
+        respond(true);
+      } catch (error) {
+        console.error('[YTMusic] Failed to add requested song to queue', error);
+        respond(false);
+      }
     },
   );
   window.ipcRenderer.on(

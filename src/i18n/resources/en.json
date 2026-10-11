@@ -839,6 +839,38 @@
       "description": "Automatically Skips non-music parts like intro/outro or parts of music videos where the song isn't playing",
       "name": "SponsorBlock"
     },
+    "stream-song-request": {
+      "description": "Let viewers search music and add songs to the queue through a temporary public link",
+      "dialog": {
+        "tunnel-unavailable": "The public link is not ready. Check your internet connection and try again.",
+        "url-copied": "Public song request link copied to clipboard."
+      },
+      "menu": {
+        "block-explicit": "Block explicit songs",
+        "cooldown": "Request cooldown (seconds)",
+        "copy-public-url": "Copy public request URL",
+        "max-per-viewer": "Max requests per visitor per session (0 = unlimited)",
+        "open-url": "Open local request page",
+        "port": "Local server port",
+        "require-nickname": "Require a name",
+        "reset-defaults": "Reset settings"
+      },
+      "name": "Stream Song Requests",
+      "prompt": {
+        "cooldown": {
+          "label": "Seconds between requests from the same visitor:",
+          "title": "Request cooldown"
+        },
+        "max-per-viewer": {
+          "label": "Maximum requests per visitor until the app closes (0 = unlimited):",
+          "title": "Visitor request limit"
+        },
+        "port": {
+          "label": "Local server port:",
+          "title": "Request page port"
+        }
+      }
+    },
     "synced-lyrics": {
       "description": "Provides synced lyrics to songs, using providers like LRClib.",
       "errors": {
@@ -1001,6 +1033,18 @@
         "visualizer-type": "Visualizer Type"
       },
       "name": "Visualizer"
+    },
+    "volume-booster": {
+      "description": "Boost volume up to 500% (5x) using Web Audio API GainNode",
+      "menu": {
+        "custom-multiplier": "Custom multiplier...",
+        "multiplier": "{{multiplier}}x ({{percent}}%)"
+      },
+      "name": "Volume Booster",
+      "prompt": {
+        "label": "Enter multiplier (1.0 to 10.0):",
+        "title": "Volume Booster Multiplier"
+      }
     }
   }
 }
